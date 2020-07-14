@@ -1,0 +1,16 @@
+{
+  "name": "new-horizons-stream-tools",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "obs-websocket-js": "^4.0.0",
+    "tiltifyapi": "^2.2.2",
+    "tmi.js": "^1.5.0"
+  }
+}
