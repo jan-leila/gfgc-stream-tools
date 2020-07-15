@@ -191,7 +191,7 @@ function createTextElement(name, text){
 }
 
 let donation_total = 0;
-function playDonation(donation){
+function playDonation(donation, update_total = true){
   let donation_amount = Number(donation.amount).toFixed(2);
   // Say donation in twitch chat
   try {
@@ -201,9 +201,11 @@ function playDonation(donation){
     console.log(err);
   }
 
-  donation_total += donation.amount;
-  // Update donation total on screen
-  setDonationAmount(donation_amount);
+  if(update_total){
+    donation_total += donation.amount;
+    // Update donation total on screen
+    setDonationAmount(donation_amount);
+  }
 
   // set the last donator on screen
   setLastDonation(donation);
@@ -364,5 +366,5 @@ twitch.connect()
   //   amount: 5,
   //   name: "Smith",
   //   comment: "Uwu",
-  // });
+  // }, false);
 });
