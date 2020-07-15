@@ -286,7 +286,7 @@ function playDonation(donation, update_total = true){
     .then(() => {
       return Promise.all([
         createTextElement('donation_name', `Received a donation from ${donation.name}`),
-        createTextElement('donation_amount', `$${donation.amount}`),
+        createTextElement('donation_amount', `$${donation_amount}`),
       ]);
       return ;
     })
