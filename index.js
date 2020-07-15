@@ -2,6 +2,8 @@
 const path = require('path');
 const fs = require('fs');
 
+let SetTextTypeProperties = (process.platform === 'linux')? 'SetTextFreetype2Properties' : 'SetTextGDIPlusProperties';
+
 // Load the auth file
 console.log('loading auth file');
 let auth;
@@ -115,21 +117,21 @@ async function playDonations(){
 
 let top_donation = 0;
 function setTopDonation(donation){
-  obs.send('SetTextGDIPlusProperties', {
+  obs.send(SetTextTypeProperties, {
     source: 'top_donator',
     text: `top donation: ${donation.name} - $${Number(donation.amount).toFixed(2)}`
   });
 }
 
 function setLastDonation(donation){
-  obs.send('SetTextGDIPlusProperties', {
+  obs.send(SetTextTypeProperties, {
     source: 'last_donator',
     text: `last donation from: ${donation.name} - $${Number(donation.amount).toFixed(2)}`
   });
 }
 
 function setDonationAmount(amount){
-  obs.send('SetTextGDIPlusProperties', {
+  obs.send(SetTextTypeProperties, {
     source: 'donation_total',
     text: `$${amount}`
   });
@@ -268,7 +270,7 @@ function playDonation(donation){
     })
     .then(({ scene, item: { id, name }}) => {
       return new Promise(function(resolve, reject) {
-        obs.send('SetTextGDIPlusProperties', {
+        obs.send(SetTextTypeProperties, {
           source: name,
           text: `Received a $${donation_amount} donation from ${donation.name}`,
         })
