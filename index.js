@@ -214,12 +214,12 @@ function playDonation(donation, update_total = true){
       donation_total += donation.amount;
       // Update donation total on screen
       return setDonationTotal(Number(donation_total).toFixed(2))
+      .then(() => {
+        // set the last donator on screen
+        return setLastDonation(donation);
+      })
     }
     return Promise.resolve();
-  })
-  .then(() => {
-    // set the last donator on screen
-    return setLastDonation(donation);
   })
   .then(() => {
     // check if we have a new top donator
