@@ -10,7 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "obs-websocket-js": "^4.0.0",
-    "tiltifyapi": "^2.2.2",
+    "tiltifyapi": "^2.2.3",
     "tmi.js": "^1.5.0"
   }
 }
