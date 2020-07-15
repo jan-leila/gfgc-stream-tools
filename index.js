@@ -119,14 +119,14 @@ let top_donation = 0;
 function setTopDonation(donation){
   obs.send(SetTextTypeProperties, {
     source: 'top_donator',
-    text: `top donation: ${donation.name} - $${Number(donation.amount).toFixed(2)}`
+    text: `Top donation: ${donation.name} - $${Number(donation.amount).toFixed(2)}`
   });
 }
 
 function setLastDonation(donation){
   obs.send(SetTextTypeProperties, {
     source: 'last_donator',
-    text: `last donation from: ${donation.name} - $${Number(donation.amount).toFixed(2)}`
+    text: `Last donation from: ${donation.name} - $${Number(donation.amount).toFixed(2)}`
   });
 }
 
@@ -135,6 +135,59 @@ function setDonationAmount(amount){
     source: 'donation_total',
     text: `$${amount}`
   });
+}
+
+function createTextElement(name, text){
+  return obs.send('GetSceneItemProperties', {
+    'scene-name': 'donations',
+    item: {
+      name,
+    },
+  })
+  .then((source_item) => {
+    return new Promise((resolve, reject) => {
+      obs.send('DuplicateSceneItem', {
+        fromScene: 'donations',
+        item: {
+          id: source_item.itemId,
+        },
+      })
+      .then((new_item) => {
+        resolve({ source_item, new_item})
+      })
+      .catch(reject);
+    });
+  })
+  .then(({ source_item, new_item }) => {
+    return new Promise(function(resolve, reject) {
+      obs.send(SetTextTypeProperties, {
+        source: name,
+        text,
+      })
+      .then(() => {
+        resolve({ source_item, new_item });
+      })
+      .catch(reject);
+    });
+  })
+  .then(({ source_item: { position,  rotation, scale, crop, bounds }, new_item: { scene, item } }) => {
+    return new Promise((resolve, reject) => {
+      obs.send('SetSceneItemProperties', {
+        scene,
+        item: item,
+        position,
+        rotation,
+        scale,
+        crop,
+        bounds,
+        visible: true,
+      })
+      .then(() => {
+        resolve({ scene, item })
+      })
+      .catch(reject);
+    });
+  })
 }
 
 let donation_total = 0;
@@ -229,78 +282,24 @@ function playDonation(donation){
       })
     })
     .then(() => {
-      return obs.send('GetSceneItemProperties', {
-        'scene-name': 'donations',
-        item: {
-          name: 'donation_message',
-        },
-      });
+      return Promise.all([
+        createTextElement('donation_name', `Received a donation from ${donation.name}`),
+        createTextElement('donation_amount', `$${donation.amount}`),
+      ]);
+      return ;
     })
-    .then((source_item) => {
-      return new Promise((resolve, reject) => {
-        obs.send('DuplicateSceneItem', {
-          fromScene: 'donations',
-          item: {
-            id: source_item.itemId,
-          },
-        })
-        .then((new_item) => {
-          resolve({ source_item, new_item})
-        })
-        .catch(reject);
-      });
-    })
-    .then(({ source_item: { position,  rotation, scale, crop, bounds }, new_item: { scene, item } }) => {
-      return new Promise((resolve, reject) => {
-        obs.send('SetSceneItemProperties', {
-          scene,
-          item: item,
-          position,
-          rotation,
-          scale,
-          crop,
-          bounds,
-          visible: true,
-        })
-        .then(() => {
-          resolve({ scene, item })
-        })
-        .catch(reject);
-      });
-    })
-    .then(({ scene, item: { id, name }}) => {
+    .then((items) => {
       return new Promise(function(resolve, reject) {
-        obs.send(SetTextTypeProperties, {
-          source: name,
-          text: `Received a $${donation_amount} donation from ${donation.name}`,
-        })
-        .then(() => {
-          resolve({ scene, id });
-        })
-        .catch(reject);
+        setTimeout(() => { resolve(items) }, 3000);
       });
     })
-    .then((item) => {
-      return new Promise(function(resolve, reject) {
-        setTimeout(() => { resolve(item) }, 3000);
+    .then((items) => {
+      return new Promise(async (resolve, reject) => {
+        for(let i in items){
+          await obs.send("DeleteSceneItem", items[i]);
+        };
+        resolve();
       });
-    })
-    .then(({ scene, id }) => {
-      return obs.send("DeleteSceneItem", {
-        scene: scene,
-        item: {
-          id: id,
-        },
-      });
-    })
-    .then(() => {
-      return obs.send('SetSceneItemProperties', {
-        'scene-name': 'donations',
-        item: {
-          name: 'donation_message',
-        },
-        visible: false,
-      })
     })
     .then(() => {
       return obs.send('SetSceneItemProperties', {
@@ -361,9 +360,9 @@ twitch.connect()
   activeCampain.getDonationStream(showDonation);
 
   // Uncomment to Test
-  // playDonation({
-  //   amount: 5,
-  //   name: "Smith",
-  //   comment: "Uwu",
-  // });
+  playDonation({
+    amount: 5,
+    name: "Smith",
+    comment: "Uwu",
+  });
 });

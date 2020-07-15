@@ -20,7 +20,7 @@ After you have those installed open obs. While we are here we are going to need 
 
 To set up the login info for the code you are going to need to go to Tools > Websocket Server Settings. Then make sure the port is 4444 and set the password to whatever you want.
 
-To set up the scenes create a donations scene. In this scene you need to create 5 text elements named `last_donator`, `top_donator`, `donation_total`, `donation_message`, `new_donation`
+To set up the scenes create a donations scene. In this scene you need to create 5 text elements named `last_donator`, `top_donator`, `donation_total`, `donation_amount`, `donation_name`, `new_donation`
 
 You will need to set the message on donation_message to whatever you want to pop up before the donation shows and then size and position all of the elements where you want them to pop up on screen.
 
