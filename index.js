@@ -204,7 +204,7 @@ function playDonation(donation, update_total = true){
   if(update_total){
     donation_total += donation.amount;
     // Update donation total on screen
-    setDonationAmount(donation_amount);
+    setDonationAmount(Number(donation_total).toFixed(2));
   }
 
   // set the last donator on screen
@@ -362,9 +362,9 @@ twitch.connect()
   activeCampain.getDonationStream(showDonation);
 
   // Uncomment to Test
-  // playDonation({
-  //   amount: 5,
-  //   name: "Smith",
-  //   comment: "Uwu",
-  // }, false);
+  playDonation({
+    amount: 5,
+    name: "Smith",
+    comment: "Uwu",
+  }, true);
 });
