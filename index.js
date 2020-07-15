@@ -360,9 +360,9 @@ twitch.connect()
   activeCampain.getDonationStream(showDonation);
 
   // Uncomment to Test
-  playDonation({
-    amount: 5,
-    name: "Smith",
-    comment: "Uwu",
-  });
+  // playDonation({
+  //   amount: 5,
+  //   name: "Smith",
+  //   comment: "Uwu",
+  // });
 });
