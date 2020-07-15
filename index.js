@@ -117,21 +117,22 @@ async function playDonations(){
 
 let top_donation = 0;
 function setTopDonation(donation){
-  obs.send(SetTextTypeProperties, {
+  top_donation = donation.amount;
+  return obs.send(SetTextTypeProperties, {
     source: 'top_donator',
     text: `Top donation: ${donation.name} - $${Number(donation.amount).toFixed(2)}`
   });
 }
 
 function setLastDonation(donation){
-  obs.send(SetTextTypeProperties, {
+  return obs.send(SetTextTypeProperties, {
     source: 'last_donator',
     text: `Last donation from: ${donation.name} - $${Number(donation.amount).toFixed(2)}`
   });
 }
 
-function setDonationAmount(amount){
-  obs.send(SetTextTypeProperties, {
+function setDonationTotal(amount){
+  return obs.send(SetTextTypeProperties, {
     source: 'donation_total',
     text: `$${amount}`
   });
@@ -201,119 +202,121 @@ function playDonation(donation, update_total = true){
     console.log(err);
   }
 
-  if(update_total){
-    donation_total += donation.amount;
-    // Update donation total on screen
-    setDonationAmount(Number(donation_total).toFixed(2));
-  }
 
-  // set the last donator on screen
-  setLastDonation(donation);
-
-  // check if we have a new top donator
-  if(donation.amount > top_donation){
-    setTopDonation(donation);
-  }
-
-  // Show donation on screen
-  return new Promise((resolve, reject) => {
-    obs.send('SetSceneItemProperties', {
+  return obs.send('SetSceneItemProperties', {
+    item: {
+      name: 'bottom_bar',
+    },
+    visible: false,
+  })
+  .then(() => {
+    if(update_total){
+      donation_total += donation.amount;
+      // Update donation total on screen
+      return setDonationTotal(Number(donation_total).toFixed(2))
+    }
+    return Promise.resolve();
+  })
+  .then(() => {
+    // set the last donator on screen
+    return setLastDonation(donation);
+  })
+  .then(() => {
+    // check if we have a new top donator
+    if(donation.amount > top_donation){
+      return setTopDonation(donation);
+    }
+    return Promise.resolve();
+  })
+  .then(() => {
+    return obs.send('GetSceneItemProperties', {
+      'scene-name': 'donations',
       item: {
-        name: 'bottom_bar',
+        name: 'new_donation',
+      },
+    });
+  })
+  .then((source_item) => {
+    return new Promise((resolve, reject) => {
+      obs.send('DuplicateSceneItem', {
+        fromScene: 'donations',
+        item: {
+          id: source_item.itemId,
+        },
+      })
+      .then((new_item) => {
+        resolve({ source_item, new_item})
+      })
+      .catch(reject);
+    });
+  })
+  .then(({ source_item: { position,  rotation, scale, crop, bounds }, new_item: { scene, item } }) => {
+    return new Promise((resolve, reject) => {
+      obs.send('SetSceneItemProperties', {
+        scene,
+        item: item,
+        position,
+        rotation,
+        scale,
+        crop,
+        bounds,
+        visible: true,
+      })
+      .then(() => {
+        resolve({ scene, item })
+      })
+      .catch(reject);
+    });
+  })
+  .then((item) => {
+    return new Promise(function(resolve, reject) {
+      setTimeout(() => { resolve(item) }, 1000);
+    });
+  })
+  .then(({ scene, item }) => {
+    return obs.send("DeleteSceneItem", {
+      scene,
+      item,
+    });
+  })
+  .then(() => {
+    return obs.send('SetSceneItemProperties', {
+      'scene-name': 'donations',
+      item: {
+        name: 'new_donation',
       },
       visible: false,
     })
-    .then(() => {
-      return obs.send('GetSceneItemProperties', {
-        'scene-name': 'donations',
-        item: {
-          name: 'new_donation',
-        },
-      });
-    })
-    .then((source_item) => {
-      return new Promise((resolve, reject) => {
-        obs.send('DuplicateSceneItem', {
-          fromScene: 'donations',
-          item: {
-            id: source_item.itemId,
-          },
-        })
-        .then((new_item) => {
-          resolve({ source_item, new_item})
-        })
-        .catch(reject);
-      });
-    })
-    .then(({ source_item: { position,  rotation, scale, crop, bounds }, new_item: { scene, item } }) => {
-      return new Promise((resolve, reject) => {
-        obs.send('SetSceneItemProperties', {
-          scene,
-          item: item,
-          position,
-          rotation,
-          scale,
-          crop,
-          bounds,
-          visible: true,
-        })
-        .then(() => {
-          resolve({ scene, item })
-        })
-        .catch(reject);
-      });
-    })
-    .then((item) => {
-      return new Promise(function(resolve, reject) {
-        setTimeout(() => { resolve(item) }, 1000);
-      });
-    })
-    .then(({ scene, item }) => {
-      return obs.send("DeleteSceneItem", {
-        scene,
-        item,
-      });
-    })
-    .then(() => {
-      return obs.send('SetSceneItemProperties', {
-        'scene-name': 'donations',
-        item: {
-          name: 'new_donation',
-        },
-        visible: false,
-      })
-    })
-    .then(() => {
-      return Promise.all([
-        createTextElement('donation_name', `Received a donation from ${donation.name}`),
-        createTextElement('donation_amount', `$${donation_amount}`),
-      ]);
-      return ;
-    })
-    .then((items) => {
-      return new Promise(function(resolve, reject) {
-        setTimeout(() => { resolve(items) }, 3000);
-      });
-    })
-    .then((items) => {
-      return new Promise(async (resolve, reject) => {
-        for(let i in items){
-          await obs.send("DeleteSceneItem", items[i]);
-        };
-        resolve();
-      });
-    })
-    .then(() => {
-      return obs.send('SetSceneItemProperties', {
-        item: {
-          name: 'bottom_bar',
-        },
-        visible: true,
-      });
-    })
-    .then(resolve)
-    .catch(reject);
-  });
+  })
+  .then(() => {
+    return Promise.all([
+      createTextElement('donation_name', `Received a donation from ${donation.name}`),
+      createTextElement('donation_amount', `$${donation_amount}`),
+    ]);
+    return ;
+  })
+  .then((items) => {
+    return new Promise(function(resolve, reject) {
+      setTimeout(() => { resolve(items) }, 3000);
+    });
+  })
+  .then((items) => {
+    return new Promise(async (resolve, reject) => {
+      for(let i in items){
+        await obs.send("DeleteSceneItem", items[i]);
+      };
+      resolve();
+    });
+  })
+  .then(() => {
+    return obs.send('SetSceneItemProperties', {
+      item: {
+        name: 'bottom_bar',
+      },
+      visible: true,
+    });
+  })
+  .catch(Promise.resolve);
 }
 
 // Connect to everything
@@ -333,16 +336,24 @@ twitch.connect()
   // Update obs
   activeCampain.getDonations()
   .then((donations) => {
-    setTopDonation(donations.reduce((acc, cur) => {
-      return (acc.amount > cur.amount)? acc : cur;
-    }));
-    setLastDonation(donations.reduce((acc, cur) => {
+    return new Promise(function(resolve, reject) {
+      return setTopDonation(donations.reduce((acc, cur) => {
+        return (acc.amount > cur.amount)? acc : cur;
+      }))
+      .then(() => {
+        resolve(donations);
+      })
+    });
+  })
+  .then((donations) => {
+    return setLastDonation(donations.reduce((acc, cur) => {
       return (acc.completedAt > cur.completedAt)? acc : cur;
     }));
   })
-
-  // Start schedual timeouts to update the game
-  activeCampain.getSchedule()
+  .then(() => {
+    // Start schedual timeouts to update the game
+    return activeCampain.getSchedule()
+  })
   .then((events) => {
     let now = Date.now();
     for(let i in events){
@@ -353,18 +364,20 @@ twitch.connect()
         twitch.set(`!game ${events[i].name}`);
       }, events[i].startsAt - now);
     };
+  })
+  .then(() => {
+    // set donation total
+    donation_total = activeCampain.amountRaised;
+    return setDonationTotal(Number(donation_total).toFixed(2));
+  })
+  .then(() => {
+    activeCampain.getDonationStream(showDonation);
+
+    // Uncomment to Test
+    playDonation({
+      amount: 5,
+      name: "Smith",
+      comment: "Uwu",
+    }, false);
   });
-
-  // set donation total
-  donation_total = activeCampain.amountRaised;
-  setDonationAmount(Number(donation_total).toFixed(2));
-
-  activeCampain.getDonationStream(showDonation);
-
-  // Uncomment to Test
-  playDonation({
-    amount: 5,
-    name: "Smith",
-    comment: "Uwu",
-  }, true);
 });
