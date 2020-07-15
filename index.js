@@ -77,7 +77,7 @@ class OBS {
   on(...args){
     this.connect()
     .then(() => {
-      this.obs.on(...args);
+      return this.obs.on(...args);
     });
   }
 
@@ -115,21 +115,21 @@ async function playDonations(){
 
 let top_donation = 0;
 function setTopDonation(donation){
-  obs.send('SetTextFreetype2Properties', {
+  obs.send('SetTextGDIPlusProperties', {
     source: 'top_donator',
     text: `top donation: ${donation.name} - $${Number(donation.amount).toFixed(2)}`
   });
 }
 
 function setLastDonation(donation){
-  obs.send('SetTextFreetype2Properties', {
+  obs.send('SetTextGDIPlusProperties', {
     source: 'last_donator',
     text: `last donation from: ${donation.name} - $${Number(donation.amount).toFixed(2)}`
   });
 }
 
 function setDonationAmount(amount){
-  obs.send('SetTextFreetype2Properties', {
+  obs.send('SetTextGDIPlusProperties', {
     source: 'donation_total',
     text: `$${amount}`
   });
@@ -139,7 +139,12 @@ let donation_total = 0;
 function playDonation(donation){
   let donation_amount = Number(donation.amount).toFixed(2);
   // Say donation in twitch chat
-  twitch.say('#gamingforglobalchange', `We have a $${donation_amount} donation from ${donation.name} ${donation.comment === null || donation.comment === ''?'':`with the comment "${donation.comment}"`}`);
+  try {
+    twitch.say('#gamingforglobalchange', `We have a $${donation_amount} donation from ${donation.name} ${donation.comment === null || donation.comment === ''?'':`with the comment "${donation.comment}"`}`);
+  }
+  catch(err){
+    console.log(err);
+  }
 
   donation_total += donation.amount;
   // Update donation total on screen
@@ -263,7 +268,7 @@ function playDonation(donation){
     })
     .then(({ scene, item: { id, name }}) => {
       return new Promise(function(resolve, reject) {
-        obs.send('SetTextFreetype2Properties', {
+        obs.send('SetTextGDIPlusProperties', {
           source: name,
           text: `Received a $${donation_amount} donation from ${donation.name}`,
         })
@@ -352,4 +357,11 @@ twitch.connect()
   setDonationAmount(Number(donation_total).toFixed(2));
 
   activeCampain.getDonationStream(showDonation);
+
+  // Uncomment to Test
+  // playDonation({
+  //   amount: 5,
+  //   name: "Smith",
+  //   comment: "Uwu",
+  // });
 });
