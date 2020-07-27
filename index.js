@@ -120,14 +120,14 @@ function setTopDonation(donation){
   top_donation = donation.amount;
   return obs.send(SetTextTypeProperties, {
     source: 'top_donator',
-    text: `Top donation: ${donation.name} - $${Number(donation.amount).toFixed(2)}`
+    text: `Top Donation: ${donation.name.substring(0,20)} - $${Number(donation.amount).toFixed(2)}`
   });
 }
 
 function setLastDonation(donation){
   return obs.send(SetTextTypeProperties, {
     source: 'last_donator',
-    text: `Last donation from: ${donation.name} - $${Number(donation.amount).toFixed(2)}`
+    text: `Last Donation: ${donation.name.substring(0,20)} - $${Number(donation.amount).toFixed(2)}`
   });
 }
 
@@ -270,7 +270,7 @@ function playDonation(donation, update_total = true){
   })
   .then((item) => {
     return new Promise(function(resolve, reject) {
-      setTimeout(() => { resolve(item) }, 1000);
+      setTimeout(() => { resolve(item) }, 3000);
     });
   })
   .then(({ scene, item }) => {
@@ -290,7 +290,7 @@ function playDonation(donation, update_total = true){
   })
   .then(() => {
     return Promise.all([
-      createTextElement('donation_name', `Received a donation from ${donation.name}`),
+      createTextElement('donation_name', `${donation.name}`),
       createTextElement('donation_amount', `$${donation_amount}`),
     ]);
     return ;
@@ -356,14 +356,14 @@ twitch.connect()
   })
   .then((events) => {
     let now = Date.now();
-    for(let i in events){
-      if(events[i].startsAt < now){
-        continue;
+    events.map((event) => {
+      if(event.startsAt < now){
+        return 0;
       }
-      setTimeout(() => {
-        twitch.set(`!game ${events[i].name}`);
-      }, events[i].startsAt - now);
-    };
+      return setTimeout(() => {
+        twitch.say('#gamingforglobalchange', `!game ${event.name}`);
+      }, event.startsAt - now);
+    })
   })
   .then(() => {
     // set donation total
@@ -374,10 +374,10 @@ twitch.connect()
     activeCampain.getDonationStream(showDonation);
 
     // Uncomment to Test
-    playDonation({
-      amount: 5,
-      name: "Smith",
-      comment: "Uwu",
-    }, false);
+    // playDonation({
+    //  amount: 15,
+    //  name: "Jardanium",
+    //  comment: "Uwu",
+    // }, false);
   });
 });
